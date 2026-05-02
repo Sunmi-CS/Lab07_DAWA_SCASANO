@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head><%- include('partials/head', {title:'Mi Dashboard'}) %></head>
+<body>
+<%- include('partials/navbar') %>
+<main class="container" style="margin-top:2rem">
+  <div class="row">
+    <div class="col s12">
+      <h4 id="welcome-msg">Bienvenido</h4>
+      <p class="grey-text">Este es tu espacio personal. Aquí puedes ver tu información y acceder a tu perfil.</p>
+    </div>
+  </div>
+  <div class="row" id="user-cards"></div>
+  <div class="row">
+    <div class="col s12 m6">
+      <a href="/profile" class="btn waves-effect waves-light">
+        <i class="material-icons left">manage_accounts</i> Mi perfil
+      </a>
+    </div>
+  </div>
+</main>
+<script>
+async function loadMe(){
+  const token=sessionStorage.getItem('token');
+  if(!token){location.href='/signIn';return;}
+  const res=await fetch('/api/users/me',{headers:{Authorization:'Bearer '+token}});
+  if(res.status===401){location.href='/signIn';return;}
+  if(!res.ok){location.href='/403';return;}
+  const u=await res.json();
+  document.getElementById('welcome-msg').textContent=`Bienvenido, ${u.name} ${u.lastName}`;
+  document.getElementById('user-cards').innerHTML=`
+    <div class="col s12 m4"><div class="card-panel teal lighten-4">
+      <span class="teal-text text-darken-3"><b>Email</b><br/>${u.email}</span></div></div>
+    <div class="col s12 m4"><div class="card-panel blue lighten-4">
+      <span class="blue-text text-darken-3"><b>Edad</b><br/>${u.edad} años</span></div></div>
+    <div class="col s12 m4"><div class="card-panel green lighten-4">
+      <span class="green-text text-darken-3"><b>Rol</b><br/>${u.roles.join(', ')}</span></div></div>
+  `;
+}
+loadMe();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+</body></html>

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head><%- include('partials/head', {title:'Admin Dashboard'}) %></head>
+<body>
+<%- include('partials/navbar') %>
+<main class="container" style="margin-top:2rem">
+  <h4>Panel de administración</h4>
+  <p class="grey-text">Lista de todos los usuarios registrados en el sistema.</p>
+  <div class="row">
+    <div class="col s12 m3"><div class="card-panel deep-purple lighten-4">
+      <span class="deep-purple-text text-darken-3"><b id="total-users">0</b><br/>usuarios totales</span></div></div>
+  </div>
+  <div class="card">
+    <div class="card-content">
+      <div class="responsive-table-wrapper">
+      <table class="striped highlight responsive-table">
+        <thead><tr>
+          <th>Nombre</th><th>Email</th><th>Teléfono</th><th>Edad</th><th>Rol</th><th>Registro</th><th>Acciones</th>
+        </tr></thead>
+        <tbody id="users-table"></tbody>
+      </table>
+      </div>
+    </div>
+  </div>
+</main>
+<div id="modal-user" class="modal">
+  <div class="modal-content">
+    <h5 id="modal-name"></h5>
+    <div id="modal-body"></div>
+  </div>
+  <div class="modal-footer"><a class="modal-close waves-effect btn-flat">Cerrar</a></div>
+</div>
+<script>
+let allUsers=[];
+async function loadUsers(){
+  const token=sessionStorage.getItem('token');
+  if(!token){location.href='/signIn';return;}
+  const res=await fetch('/api/users',{headers:{Authorization:'Bearer '+token}});
+  if(res.status===401){location.href='/signIn';return;}
+  if(res.status===403){location.href='/403';return;}
+  allUsers=await res.json();
+  document.getElementById('total-users').textContent=allUsers.length;
+  const tbody=document.getElementById('users-table');
+  tbody.innerHTML=allUsers.map((u,i)=>`
+    <tr>
+      <td>${u.name} ${u.lastName}</td>
+      <td>${u.email}</td>
+      <td>${u.phoneNumber||'-'}</td>
+      <td>${u.edad} años</td>
+      <td><span class="chip ${u.roles.includes('admin')?'red lighten-4 red-text text-darken-3':'teal lighten-4 teal-text text-darken-3'}">${u.roles.join(', ')}</span></td>
+      <td>${new Date(u.createdAt).toLocaleDateString('es-PE')}</td>
+      <td><a class="btn-small waves-effect" onclick="verUsuario(${i})"><i class="material-icons">visibility</i></a></td>
+    </tr>
+  `).join('');
+  M.Modal.init(document.querySelectorAll('.modal'));
+}
+function verUsuario(i){
+  const u=allUsers[i];
+  document.getElementById('modal-name').textContent=`${u.name} ${u.lastName}`;
+  document.getElementById('modal-body').innerHTML=`
+    <p><b>Email:</b> ${u.email}</p>
+    <p><b>Teléfono:</b> ${u.phoneNumber||'-'}</p>
+    <p><b>Edad:</b> ${u.edad} años (${new Date(u.birthdate).toLocaleDateString('es-PE')})</p>
+    <p><b>Dirección:</b> ${u.address||'-'}</p>
+    <p><b>Roles:</b> ${u.roles.join(', ')}</p>
+    <p><b>Registro:</b> ${new Date(u.createdAt).toLocaleString('es-PE')}</p>
+    ${u.url_profile?`<p><b>Foto:</b> <a href="${u.url_profile}" target="_blank">Ver</a></p>`:''}
+  `;
+  const modal=document.getElementById('modal-user');
+  M.Modal.getInstance(modal).open();
+}
+loadUsers();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+</body></html>
