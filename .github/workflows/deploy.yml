@@ -1,15 +1,12 @@
 name: Deploy to Render
-
 on:
   push:
     branches:
       - main
       - master
-
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-
     steps:
       - name: 📥 Checkout del código
         uses: actions/checkout@v3
@@ -20,16 +17,17 @@ jobs:
           node-version: '18'
 
       - name: 📦 Instalar dependencias
+        # Aquí le decimos que entre a la carpeta antes de ejecutar npm install
         run: npm install
+        working-directory: ./express-mongo-auth 
 
       - name: 🚀 Disparar despliegue en Render
-        # Este paso es opcional si ya conectaste Render directamente a GitHub, 
-        # pero es excelente para cumplir con el requisito de "Workflow configurado".
+        # También aquí para que el comando se ejecute en el lugar correcto
         run: |
           if [ -n "${{ secrets.RENDER_DEPLOY_HOOK }}" ]; then
-            echo "Llamando al Webhook de Render para desplegar..."
+            echo "Llamando al Webhook de Render..."
             curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK }}
           else
             echo "No se encontró el secreto RENDER_DEPLOY_HOOK."
-            echo "Se asume que Render está escuchando los cambios automáticamente."
           fi
+        working-directory: ./express-mongo-auth
